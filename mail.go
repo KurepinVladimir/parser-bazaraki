@@ -11,6 +11,7 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
+// Программа для парсинга сайта bazaraki.com
 func main() {
 	// Создаём контекст Chrome
 	ctx, cancel := chromedp.NewContext(context.Background())
