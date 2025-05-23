@@ -4,8 +4,6 @@ go 1.24.3
 
 require github.com/PuerkitoBio/goquery v1.10.3
 
-require github.com/suyashkumar/dicom v1.0.3
-
 require (
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/chromedp/cdproto v0.0.0-20250518235601-40b4c35ec9fe // indirect
