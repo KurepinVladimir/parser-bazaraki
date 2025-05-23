@@ -1,69 +1,60 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"strings"
-	"time"
+	"net/http"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/chromedp/chromedp"
 )
 
+// main is the entry point of the application. It fetches the Hacker News homepage,
+// checks the HTTP response status, parses the HTML using goquery, and extracts
+// story titles and their links. The function prints the extracted titles and links
+// to the standard output. It also includes debug print statements for tracing execution.
 func main() {
-	// Создаём контекст Chrome
-	ctx, cancel := chromedp.NewContext(context.Background())
-	defer cancel()
+	fmt.Println("test1")
 
-	// Добавим таймаут на всякий случай
-	ctx, cancel = context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
+	// Загружаем страницу
+	//res, err := http.Get("https://news.ycombinator.com")
 
-	var html string
+	adr := "https://www.bazaraki.com/car-motorbikes-boats-and-parts/cars-trucks-and-vans/doors---20/extras---130/extras---140/extras---160/extras---20/extras---50/gearbox---1/mileage_max---90000/year_min---66/?price_min=6000&price_max=12500"
 
-	// URL страницы
-	url := "https://www.bazaraki.com/car-motorbikes-boats-and-parts/cars-trucks-and-vans/doors---20/extras---130/extras---20/extras---50/gearbox---1/mileage_max---90000/year_min---66/?price_min=6000&price_max=12500"
+	res, err := http.Get(adr)
 
-	// Запускаем браузер и получаем HTML после полной загрузки страницы
-	err := chromedp.Run(ctx,
-		chromedp.Navigate(url),
-		chromedp.Sleep(5*time.Second), // ждём загрузку JS
-		chromedp.OuterHTML("body", &html),
-	)
 	if err != nil {
-		log.Fatalf("Ошибка при загрузке страницы: %v", err)
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	// Проверка статуса
+	if res.StatusCode != 200 {
+		log.Fatalf("Ошибка запроса: статус %d", res.StatusCode)
+		fmt.Println("test2")
 	}
 
-	// Загружаем в goquery
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(html)))
+	// Загружаем HTML в goquery
+	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
-		log.Fatalf("Ошибка парсинга HTML: %v", err)
+		fmt.Println("test3")
+		log.Fatal(err)
+
 	}
 
-	fmt.Println("Объявления:")
-	// Для каждого блока объявления
-	doc.Find(".advert__content").Each(func(i int, s *goquery.Selection) {
-		// Название
-		titleSel := s.Find("a.advert__content-title")
-		title := strings.TrimSpace(titleSel.Text())
-		link, _ := titleSel.Attr("href")
+	// Ищем заголовки
+	fmt.Println("test4")
+	doc.Find(".storylink").Each(func(i int, s *goquery.Selection) {
+		fmt.Println("test5")
+		title := s.Text()
+		link, _ := s.Attr("href")
+		fmt.Printf("%d: %s (%s)\n", i+1, title, link)
+	})
 
-		// Цена
-		price := strings.TrimSpace(s.Find("a.advert__content-price").Text())
-
-		//<span><b>€</b>12.500  <span class="advert__content-price--discount"><b>€</b>13.200</span></span>
-		priceNode := s.Find("a.advert__content-price > span").First()
-		priceNode.Find(".advert__content-price--discount").Remove()
-		price2 := strings.TrimSpace(priceNode.Text())
-
-		// Выводим, если всё есть
-		if title != "" && link != "" && price != "" {
-			fmt.Printf("%d. %s\n", i+1, title)
-			fmt.Println("   Ссылка: https://www.bazaraki.com" + link)
-			fmt.Println("   Цена:  ", price)
-			fmt.Println("   Цена (итоговая):  ", price2)
-		}
+	// Ищем заголовки
+	doc.Find(".titleline > a").Each(func(i int, s *goquery.Selection) {
+		title := s.Text()
+		link, _ := s.Attr("href")
+		fmt.Printf("%d: %s\n%s\n\n", i+1, title, link)
 	})
 
 }
